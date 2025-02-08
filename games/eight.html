@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пятнашки 3x3</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #puzzle {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+        }
+        .tile {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100px;
+            height: 100px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        .tile.empty {
+            background-color: transparent;
+            cursor: default;
+        }
+        #info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        #restart {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        #restart:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div id="puzzle"></div>
+    <div id="info">
+        <p>Ходы: <span id="move-counter">0</span></p>
+        <p>Рекорд: <span id="best-score">0</span></p>
+    </div>
+    <button id="restart">Рестарт</button>
+</div>
+
+<script>
+  const puzzle = document.getElementById('puzzle');
+  const moveCounter = document.getElementById('move-counter');
+  const bestScore = document.getElementById('best-score');
+  const restartButton = document.getElementById('restart');
+  let tiles = [];
+  let emptyIndex = 8; // Пустая плитка в начале
+  let moves = 0;
+  let best = localStorage.getItem('bestScore') || Infinity; // Рекорд из localStorage
+
+  // Отображаем рекорд
+  bestScore.textContent = best === Infinity ? 0 : best;
+
+  function createPuzzle() {
+    const numbers = [1, 2, 3, 4, 5, 6, 7, 8]; // Используем эмодзи для 8
+    for (let i = 0; i < 9; i++) {
+      const tile = document.createElement('div');
+      tile.classList.add('tile');
+      tile.textContent = numbers[i] || '';
+      tile.addEventListener('click', () => moveTile(i));
+      puzzle.appendChild(tile);
+      tiles.push(tile);
+    }
+    tiles[emptyIndex].classList.add('empty');
+    tiles[emptyIndex].textContent = '';
+    shuffleTiles();
+  }
+
+  function shuffleTiles() {
+    for (let i = 0; i < 500; i++) {
+      const randomIndex = Math.floor(Math.random() * 9);
+      moveTile(randomIndex, true);
+    }
+    moves = 0; // Сбрасываем счётчик ходов
+    moveCounter.textContent = moves;
+  }
+
+  function moveTile(index, isShuffling = false) {
+    const tile = tiles[index];
+    if (tile.classList.contains('empty')) return;
+
+    const x = index % 3;
+    const y = Math.floor(index / 3);
+
+    const emptyX = emptyIndex % 3;
+    const emptyY = Math.floor(emptyIndex / 3);
+
+    if ((x === emptyX && Math.abs(y - emptyY) === 1) || (y === emptyY && Math.abs(x - emptyX) === 1)) {
+      tiles[emptyIndex].textContent = tile.textContent;
+      tiles[emptyIndex].classList.remove('empty');
+      tile.textContent = '';
+      tile.classList.add('empty');
+      emptyIndex = index;
+
+      if (!isShuffling) {
+        moves++; // Увеличиваем счётчик ходов
+        moveCounter.textContent = moves;
+
+        if (checkWin()) {
+          if (moves < best) {
+            best = moves;
+            localStorage.setItem('bestScore', best); // Сохраняем рекорд
+            bestScore.textContent = best;
+          }
+          alert(`Вы выиграли за ${moves} ходов!`);
+        }
+      }
+    }
+  }
+
+  function checkWin() {
+    const numbers = [1, 2, 3, 4, 5, 6, 7, '8️⃣'];
+    for (let i = 0; i < 8; i++) {
+      if (tiles[i].textContent !== numbers[i].toString()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Кнопка рестарта
+  restartButton.addEventListener('click', () => {
+    puzzle.innerHTML = ''; // Очищаем поле
+    tiles = [];
+    createPuzzle();
+  });
+
+  createPuzzle();
+</script>
+</body>
+</html>
