@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сапер</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .game {
+            display: grid;
+            gap: 2px;
+            background-color: #ccc;
+            padding: 2px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #999;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            user-select: none;
+        }
+        .cell.revealed {
+            background-color: #ddd;
+        }
+        .cell.mine {
+            background-color: #f00;
+        }
+        .cell.flagged {
+            background-color: #ff0;
+        }
+        .stats {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .restart-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .restart-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div class="stats" id="stats">
+    Победы: <span id="wins">0</span> | Поражения: <span id="losses">0</span>
+</div>
+<div class="game" id="game"></div>
+<button class="restart-button" id="restart-button">Рестарт</button>
+
+<script>
+  const ROWS = 10;
+  const COLS = 10;
+  const MINES = 10;
+
+  let board = [];
+  let gameOver = false;
+
+  // Загрузка статистики из localStorage
+  let stats = JSON.parse(localStorage.getItem('minesweeperStats')) || { wins: 0, losses: 0 };
+
+  // Обновление отображения статистики
+  function updateStats() {
+    document.getElementById('wins').textContent = stats.wins;
+    document.getElementById('losses').textContent = stats.losses;
+  }
+
+  // Инициализация игры
+  function initGame() {
+    board = [];
+    gameOver = false;
+    const game = document.getElementById('game');
+    game.innerHTML = '';
+    game.style.gridTemplateColumns = `repeat(${COLS}, 30px)`;
+    game.style.gridTemplateRows = `repeat(${ROWS}, 30px)`;
+
+    for (let row = 0; row < ROWS; row++) {
+      board[row] = [];
+      for (let col = 0; col < COLS; col++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.row = row;
+        cell.dataset.col = col;
+        cell.addEventListener('click', handleClick);
+        cell.addEventListener('contextmenu', handleRightClick);
+        game.appendChild(cell);
+        board[row][col] = { mine: false, revealed: false, flagged: false, count: 0 };
+      }
+    }
+
+    placeMines();
+    calculateNumbers();
+    updateStats();
+  }
+
+  // Размещение мин
+  function placeMines() {
+    let minesPlaced = 0;
+    while (minesPlaced < MINES) {
+      const row = Math.floor(Math.random() * ROWS);
+      const col = Math.floor(Math.random() * COLS);
+      if (!board[row][col].mine) {
+        board[row][col].mine = true;
+        minesPlaced++;
+      }
+    }
+  }
+
+  // Подсчет чисел вокруг мин
+  function calculateNumbers() {
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        if (board[row][col].mine) continue;
+        let count = 0;
+        for (let i = -1; i <= 1; i++) {
+          for (let j = -1; j <= 1; j++) {
+            const newRow = row + i;
+            const newCol = col + j;
+            if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS && board[newRow][newCol].mine) {
+              count++;
+            }
+          }
+        }
+        board[row][col].count = count;
+      }
+    }
+  }
+
+  // Обработка клика
+  function handleClick(event) {
+    if (gameOver) return;
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    const cell = board[row][col];
+    if (cell.flagged || cell.revealed) return;
+
+    if (cell.mine) {
+      event.target.classList.add('mine');
+      gameOver = true;
+      stats.losses++;
+      localStorage.setItem('minesweeperStats', JSON.stringify(stats));
+      alert('Игра окончена! Вы наступили на мину!');
+      revealAllMines();
+      updateStats();
+      return;
+    }
+
+    cell.revealed = true;
+    event.target.classList.add('revealed');
+    event.target.textContent = cell.count || '';
+
+    if (cell.count === 0) {
+      revealNeighbors(row, col);
+    }
+
+    checkWin();
+  }
+
+  // Обработка правого клика (флажок)
+  function handleRightClick(event) {
+    event.preventDefault();
+    if (gameOver) return;
+    const row = parseInt(event.target.dataset.row);
+    const col = parseInt(event.target.dataset.col);
+    const cell = board[row][col];
+    if (cell.revealed) return;
+
+    cell.flagged = !cell.flagged;
+    event.target.classList.toggle('flagged', cell.flagged);
+  }
+
+  // Открытие соседних ячеек
+  function revealNeighbors(row, col) {
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        const newRow = row + i;
+        const newCol = col + j;
+        if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS) {
+          const neighbor = board[newRow][newCol];
+          if (!neighbor.revealed && !neighbor.flagged) {
+            neighbor.revealed = true;
+            const cell = document.querySelector(`.cell[data-row='${newRow}'][data-col='${newCol}']`);
+            cell.classList.add('revealed');
+            cell.textContent = neighbor.count || '';
+            if (neighbor.count === 0) {
+              revealNeighbors(newRow, newCol);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Открытие всех мин
+  function revealAllMines() {
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        if (board[row][col].mine) {
+          const cell = document.querySelector(`.cell[data-row='${row}'][data-col='${col}']`);
+          cell.classList.add('mine');
+        }
+      }
+    }
+  }
+
+  // Проверка на победу
+  function checkWin() {
+    let unrevealedCount = 0;
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        if (!board[row][col].revealed && !board[row][col].mine) {
+          unrevealedCount++;
+        }
+      }
+    }
+    if (unrevealedCount === 0) {
+      gameOver = true;
+      stats.wins++;
+      localStorage.setItem('minesweeperStats', JSON.stringify(stats));
+      alert('Поздравляем! Вы выиграли!');
+      updateStats();
+    }
+  }
+
+  // Кнопка рестарта
+  document.getElementById('restart-button').addEventListener('click', initGame);
+
+  // Инициализация игры при загрузке страницы
+  initGame();
+</script>
+</body>
+</html>
