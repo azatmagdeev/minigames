@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список игр</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 10px;
+        }
+        .game-tile {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .game-tile:hover {
+            transform: scale(1.05);
+        }
+        .game-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .game-title {
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="game-tile">
+        <div class="game-icon">🎮</div>
+        <div class="game-title">Игра 1</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🕹️</div>
+        <div class="game-title">Игра 2</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">👾</div>
+        <div class="game-title">Игра 3</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🎲</div>
+        <div class="game-title">Игра 4</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🧩</div>
+        <div class="game-title">Игра 5</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🎯</div>
+        <div class="game-title">Игра 6</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🃏</div>
+        <div class="game-title">Игра 7</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">🏆</div>
+        <div class="game-title">Игра 8</div>
+    </div>
+    <div class="game-tile">
+        <div class="game-icon">⚽</div>
+        <div class="game-title">Игра 9</div>
+    </div>
+</div>
+</body>
+</html>
